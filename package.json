@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "set NODE_OPTIONS=--max-old-space-size=1536 && next dev -p 3000",
     "build": "next build",
+    "postinstall": "prisma generate",
     "start": "set NODE_ENV=production && node .next/standalone/server.js",
     "lint": "eslint .",
     "db:push": "prisma db push --accept-data-loss",

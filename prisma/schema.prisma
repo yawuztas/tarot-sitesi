@@ -1,0 +1,650 @@
+// ============================================================
+// MISTIK TAROT - Prisma Schema
+// ============================================================
+// Tüm tablolar SQLite üzerine kurulu (dev ortamı).
+// Üretimde PostgreSQL'e migrate edilecek (jsonb + array desteği).
+// ============================================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================================
+// 1. KULLANICI ve PROFIL
+// ============================================================
+
+model User {
+  id                    String       @id @default(cuid())
+  email                 String       @unique
+  emailVerified         DateTime?
+  name                  String?
+  image                 String?
+  displayName           String?
+  
+  // Tercihler
+  preferredStyleId      String?
+  preferredStyle        TarotStyle?  @relation(fields: [preferredStyleId], references: [id])
+  preferredLanguage     String       @default("tr")
+  theme                 String       @default("mystic-dark")
+  
+  // Kredi cüzdanı
+  creditsBalance        Int          @default(1)  // kayıt bonusu: 1 ücretsiz fal
+  freeReadingsUsed      Int          @default(0)
+  totalReadingsCount    Int          @default(0)
+  
+  // Astro modu (opt-in)
+  astroModeEnabled      Boolean      @default(false)
+  birthDate             DateTime?
+  birthTime             String?      // "HH:MM" formatında
+  birthTimeUnknown      Boolean      @default(true)
+  birthPlaceName        String?
+  birthLat              Float?
+  birthLng              Float?
+  natalChartJson        String?      // JSON: cache'lenmiş natal chart
+  
+  // Streak (gamification)
+  currentStreak         Int          @default(0)
+  longestStreak         Int          @default(0)
+  lastActiveDate        DateTime?
+  
+  // Auth
+  accounts              Account[]
+  sessions              Session[]
+  
+  // Relations
+  readings              Reading[]
+  dailyCards            DailyCard[]
+  creditTransactions    CreditTransaction[]
+  payments              Payment[]
+  userSettings          UserSettings?
+  
+  createdAt             DateTime     @default(now())
+  updatedAt             DateTime     @updatedAt
+}
+
+model UserSettings {
+  id                    String       @id @default(cuid())
+  userId                String       @unique
+  user                  User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Bildirimler
+  dailyCardEnabled      Boolean      @default(true)
+  dailyCardTime         String       @default("09:00")
+  pushNotifications     Boolean      @default(true)
+  
+  // Fal deneyimi
+  hapticsEnabled        Boolean      @default(true)
+  soundEnabled          Boolean      @default(true)
+  cardRevealSpeed       String       @default("normal")  // slow/normal/fast
+  
+  // Gizlilik
+  shareReadingDefault   Boolean      @default(false)
+  
+  createdAt             DateTime     @default(now())
+  updatedAt             DateTime     @updatedAt
+}
+
+// NextAuth için (mevcut NextAuth.js v4)
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// ============================================================
+// 2. TAROT ÇEKIRDEGI - Tarzlar ve Kartlar
+// ============================================================
+
+model TarotStyle {
+  id            String   @id @default(cuid())
+  slug          String   @unique  // "rider-waite", "marseille", "thoth"
+  name          String             // "Rider-Waite-Smith"
+  nameTr        String             // "Rider-Waite"
+  description   String?
+  descriptionTr String?
+  imageTheme    String?            // tema sınıfı (renk paleti)
+  isActive      Boolean  @default(true)
+  sortOrder     Int      @default(0)
+  
+  cards         Card[]
+  readings      Reading[]
+  preferredByUsers User[]
+  
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model Card {
+  id                      String   @id @default(cuid())
+  styleId                 String
+  style                   TarotStyle @relation(fields: [styleId], references: [id])
+  slug                    String   // "major-00-fool", "minor-wands-01-ace"
+  
+  // İsim (çoklu dil kolonları)
+  name                    String   // "The Fool"
+  nameTr                  String   // "Deli"
+  
+  // Sınıflandırma
+  arcanaType              String   // "major" | "minor"
+  suit                    String?  // "wands" | "cups" | "swords" | "pentacles" | null
+  number                  Int      // major: 0-21, minor: 1-14
+  
+  // Anlamlar (Türkçe)
+  keywordsUpright         String   // JSON array: ["yeni başlangıçlar", "masumiyet"]
+  keywordsReversed        String   // JSON array: ["tehlike", "dikkatsizlik"]
+  meaningsUpright         String   // uzun metin
+  meaningsReversed        String   // uzun metin
+  
+  // Semantik karşılıklar
+  astrologicalCorrespondence String? // "Uranus" / "Mars/Boğa" vb.
+  element                  String?  // "fire" | "water" | "air" | "earth"
+  numerologyKey            String?  // "0" / "1" / "13"
+  
+  // Görseller (R2 URL'leri)
+  imageUrlThumb           String?  // 75px
+  imageUrlSmall           String?  // 200px
+  imageUrlMedium          String?  // 400px
+  imageUrlLarge           String?  // 800px
+  imageUrlFull            String?  // 1200px
+  
+  // İlişkiler
+  readingCards            ReadingCard[]
+  
+  // Unique constraint: bir tarzda kart slug unique olmalı
+  @@unique([styleId, slug])
+  createdAt               DateTime @default(now())
+  updatedAt               DateTime @updatedAt
+}
+
+// ============================================================
+// 3. AÇILIMLAR (Spreads)
+// ============================================================
+
+model Spread {
+  id            String   @id @default(cuid())
+  slug          String   @unique  // "single", "three-card", "celtic-cross"
+  name          String             // "Celtic Cross"
+  nameTr        String             // "Kelt Haçı"
+  description   String?
+  descriptionTr String?
+  cardCount     Int
+  category      String             // "basic" | "advanced" | "thematic"
+  difficulty    Int      @default(1)  // 1-3
+  imageUrl      String?
+  isActive      Boolean  @default(true)
+  sortOrder     Int      @default(0)
+  
+  positions     SpreadPosition[]
+  readings      Reading[]
+  
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model SpreadPosition {
+  id            String   @id @default(cuid())
+  spreadId      String
+  spread        Spread   @relation(fields: [spreadId], references: [id], onDelete: Cascade)
+  
+  positionIndex Int      // 0-based
+  label         String   // "Past", "Present", "Future" / "Geçmiş", "Şimdiki", "Gelecek"
+  labelTr       String
+  meaning       String?
+  meaningTr     String?
+  isOptional    Boolean  @default(false)
+  
+  @@unique([spreadId, positionIndex])
+}
+
+// ============================================================
+// 4. NIYET KATEGORILERI
+// ============================================================
+
+model IntentionCategory {
+  id                String   @id @default(cuid())
+  slug              String   @unique  // "love", "career", "health", "spiritual", "general"
+  name              String             // "Love & Relationships"
+  nameTr            String             // "Aşk ve İlişkiler"
+  description       String?
+  descriptionTr     String?
+  
+  // AI prompt modifier (Türkçe)
+  promptModifierTr  String             // Bu niyet için ek prompt talimatı
+  
+  icon              String?            // lucide icon adı
+  color             String?            // tema rengi
+  sortOrder         Int      @default(0)
+  isActive          Boolean  @default(true)
+  
+  readings          Reading[]
+  
+  createdAt         DateTime @default(now())
+}
+
+// ============================================================
+// 5. FAL KAYITLARI (Readings)
+// ============================================================
+
+model Reading {
+  id                       String   @id @default(cuid())
+  userId                   String
+  user                     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  spreadId                 String
+  spread                   Spread   @relation(fields: [spreadId], references: [id])
+  
+  styleId                  String
+  style                    TarotStyle @relation(fields: [styleId], references: [id])
+  
+  intentionCategoryId      String?
+  intentionCategory        IntentionCategory? @relation(fields: [intentionCategoryId], references: [id])
+  intentionText            String?  // kullanıcının serbest niyet metni
+  
+  // Çekim bilgileri
+  drawnAt                  DateTime @default(now())
+  rngSeed                  String   // provably-fair seed
+  rngHash                  String   // commit-reveal hash
+  
+  // Astro bağlam (cache'lenmiş snapshot)
+  astroContextJson         String?  // natal + transits JSON
+  
+  // Önceki fal bağlamı (son 3 falın özeti)
+  previousReadingsContext  String?  // JSON array
+  
+  // AI sonucu
+  aiInterpretation         String?  // AI'nın mistik yorumu
+  aiModelUsed              String?
+  aiCached                 Boolean  @default(false)
+  aiInputTokens            Int?
+  aiOutputTokens           Int?
+  
+  // Sonraki fal için özet (AI'ın ürettiği)
+  aiSummaryTr              String?  // 50-100 kelime özet
+  keyThemes                String?  // JSON array: ["ilişki", "sabır"]
+  predictedArc             String?  // gelişim çizgisi
+  
+  // Kullanıcı notları
+  userMoodNote             String?
+  userFollowupNote         String?
+  followupAt               DateTime?
+  
+  // Kredi takibi
+  creditTransactionId      String?
+  isFreeReading            Boolean  @default(false)
+  
+  // Durum
+  status                   String   @default("pending")  // "pending" | "completed" | "failed"
+  
+  // İlişkiler
+  readingCards             ReadingCard[]
+  
+  createdAt                DateTime @default(now())
+  completedAt              DateTime?
+  updatedAt                DateTime @updatedAt
+  
+  @@index([userId, drawnAt])
+  @@index([styleId])
+}
+
+model ReadingCard {
+  id            String   @id @default(cuid())
+  readingId     String
+  reading       Reading  @relation(fields: [readingId], references: [id], onDelete: Cascade)
+  
+  cardId        String
+  card          Card     @relation(fields: [cardId], references: [id])
+  
+  positionIndex Int      // spread pozisyonu
+  isReversed    Boolean  @default(false)
+  drawOrder     Int      // çekim sırası
+  
+  @@index([readingId])
+  @@index([cardId])
+}
+
+// ============================================================
+// 6. GÜNLÜK KART (Ücretsiz ritüel)
+// ============================================================
+
+model DailyCard {
+  id              String   @id @default(cuid())
+  userId          String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  cardId          String
+  isReversed      Boolean  @default(false)
+  
+  drawnAtDate     DateTime  // sadece tarih (saat 00:00)
+  
+  // Yansıma (kullanıcı sonra ekler)
+  reflectedAt     DateTime?
+  reflectionNote  String?
+  moodTag         String?  // "calm" | "anxious" | "hopeful" vb.
+  
+  createdAt       DateTime @default(now())
+  
+  @@unique([userId, drawnAtDate])
+  @@index([userId, drawnAtDate])
+}
+
+// ============================================================
+// 7. ÖDEME SISTEMI - Kredi Cüzdanı
+// ============================================================
+
+model CreditPackage {
+  id                  String   @id @default(cuid())
+  name                String             // "Başlangıç", "Sık Kullanıcı"
+  creditAmount        Int
+  priceTl             Float              // 50, 135, 200, 350, 750
+  discountPercentage  Float     @default(0)
+  isActive            Boolean   @default(true)
+  sortOrder           Int       @default(0)
+  
+  description         String?
+  badge               String?            // "Popüler", "En Avantajlı"
+  
+  payments            Payment[]
+  
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+}
+
+model Payment {
+  id                  String   @id @default(cuid())
+  userId              String
+  user                User     @relation(fields: [userId], references: [id])
+  
+  packageId           String
+  package             CreditPackage @relation(fields: [packageId], references: [id])
+  
+  amountTl            Float
+  creditsPurchased    Int
+  
+  // Iyzico
+  iyzipicoPaymentId   String?
+  iyzipicoConversationId String?
+  status              String   @default("pending")  // pending/success/failed/refunded
+  rawResponse         String?  // JSON
+  
+  createdAt           DateTime @default(now())
+  completedAt         DateTime?
+  
+  creditTransactions  CreditTransaction[]
+  
+  @@index([userId, createdAt])
+}
+
+model CreditTransaction {
+  id              String   @id @default(cuid())
+  userId          String
+  user            User     @relation(fields: [userId], references: [id])
+  
+  type            String   // "purchase" | "spend" | "bonus" | "refund"
+  amount          Int      // +5 alım, -1 harcama
+  balanceAfter    Int
+  
+  reason          String   // "reading" | "signup_bonus" | "daily_login" | "referral" | "purchase"
+  
+  paymentId       String?
+  payment         Payment? @relation(fields: [paymentId], references: [id])
+  
+  readingId       String?  // harcama yapılan fal
+  
+  createdAt       DateTime @default(now())
+  
+  @@index([userId, createdAt])
+}
+
+// ============================================================
+// 8. AI ÖNBELLEK
+// ============================================================
+
+model InterpretationCache {
+  id              String   @id @default(cuid())
+  cacheKey        String   @unique  // hash(cards+positions+intention+astro_hash)
+  responsePayload String   // JSON: tam AI yanıtı
+  model           String
+  tokenCount      Int?
+  createdAt       DateTime @default(now())
+  expiresAt       DateTime
+  
+  @@index([cacheKey, expiresAt])
+}
+
+// ============================================================
+// 9. ASTROLOJI ÖNBELLEK (Günlük transit)
+// ============================================================
+
+model AstroTransitsCache {
+  id              String   @id @default(cuid())
+  cacheDate       DateTime @unique  // sadece tarih
+  transitJson     String   // tüm gezegen konumları
+  createdAt       DateTime @default(now())
+  
+  @@index([cacheDate])
+}
+
+// ============================================================
+// 10. SISTEM LOGU (Opsiyonel - AI çağrı takibi)
+// ============================================================
+
+model AiCallLog {
+  id              String   @id @default(cuid())
+  userId          String?
+  readingId       String?
+  
+  model           String
+  provider        String   // "anthropic" | "openai" | "z-ai"
+  
+  inputTokens     Int?
+  outputTokens    Int?
+  latencyMs       Int?
+  
+  cacheHit        Boolean  @default(false)
+  success         Boolean
+  errorMessage    String?
+  
+  createdAt       DateTime @default(now())
+  
+  @@index([userId, createdAt])
+  @@index([createdAt])
+}
+
+// ============================================================
+// 11. SOHBET FALI - ANONIM SESSION (Magic-free flow)
+// ============================================================
+// Kullanıcı kayıt olmadan fal sürecine başlar. Ödeme yapılıp
+// "verilerimi sakla" onaylanınca User'a bağlanır.
+
+model AnonymousSession {
+  id              String   @id @default(cuid())
+  cookieId        String   @unique  // tarayıcı cookie'si
+  
+  // Toplanan bilgiler (misafir)
+  displayName     String?
+  birthDate       DateTime?
+  birthTime       String?      // "HH:MM" — null ise saat bilinmiyor
+  birthTimeUnknown Boolean    @default(true)
+  birthPlaceName  String?
+  birthLat        Float?
+  birthLng        Float?
+  natalChartJson  String?      // hesaplanmış doğum haritası
+  
+  // Fal bilgileri
+  spreadSlug      String?
+  drawnCardsJson  String?      // çekilen kartlar JSON
+  rngSeed         String?
+  rngHash         String?
+  
+  // Teaser
+  teaserText      String?
+  
+  // Ödeme
+  paymentId       String?
+  paidAt          DateTime?
+  questionQuota   Int      @default(0)  // ödeme sonrası 10
+  questionsUsed   Int      @default(0)
+  
+  // Etik onaylar (ödeme ekranında)
+  consentSaveData     Boolean @default(false)
+  consentMarketing    Boolean @default(false)
+  
+  // User'a dönüş (opt-in sonrası)
+  userId          String?
+  finalizedAt     DateTime?
+  
+  expiresAt       DateTime   // 24 saat sonra silinecek (opt-in yoksa)
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+  
+  relations       ChatMessage[]
+  
+  @@index([cookieId])
+  @@index([userId])
+}
+
+// ============================================================
+// 12. SOHBET MESAJLARI
+// ============================================================
+
+model ChatMessage {
+  id              String   @id @default(cuid())
+  sessionId       String
+  session         AnonymousSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  
+  role            String   // "user" | "assistant" | "system"
+  content         String
+  questionNumber  Int?     // kullanıcının kaçıncı sorusu (1-10)
+  
+  createdAt       DateTime @default(now())
+  
+  @@index([sessionId, createdAt])
+}
+
+// ============================================================
+// 13. IYZICO ÖDEME OTURUMU
+// ============================================================
+
+model PaymentSession {
+  id                String   @id @default(cuid())
+  anonymousSessionId String?
+  userId            String?
+  
+  amount            Int      // kuruş cinsinden (7500 = 75.00 TL)
+  currency          String   @default("TRY")
+  
+  status            String   @default("pending")  // "pending" | "paid" | "failed" | "refunded"
+  provider          String   @default("iyzico")
+  providerPaymentId String?  // iyzico paymentId
+  providerToken     String?  // iyzico checkoutToken
+  
+  description       String   @default("Mistik Tarot - 10 Soru Fal Hakkı")
+  
+  paidAt            DateTime?
+  createdAt         DateTime @default(now())
+  
+  @@index([anonymousSessionId])
+  @@index([userId])
+}
+
+// ============================================================
+// 14. KULLANICI ONAYLARI (KVKK/GDPR)
+// ============================================================
+
+model UserConsent {
+  userId              String   @id
+  anonymousSessionId  String?  // hangi session'da onay verdi
+  
+  saveData            Boolean  @default(true)   // verilerimi sakla
+  marketingEmail      Boolean  @default(false)   // astrolojik günlerde mail
+  
+  acceptedAt          DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+}
+
+// ============================================================
+// 15. KULLANICI KİMLİK DOĞRULAMA SORULARI
+// ============================================================
+// Email girince "Ahmet sen misin? Hangi gün doğmuştun?" gibi
+// kişisel soru sor → cevap doğruysa bilgileri getir.
+// Mistik bir "kimlik doğrulama ritüeli" hissi yaratır.
+
+model UserIdentityChallenge {
+  id              String   @id @default(cuid())
+  userId          String
+  
+  email           String   // kullanıcı email'i
+  questionType    String   // "birth_day" | "birth_month" | "first_name_letter" | ...
+  questionText   String   // "Hangi gün doğmuştun?" (Türkçe)
+  expectedAnswer String   // "15" (case-insensitive karşılaştırma)
+  
+  attempts        Int      @default(0)
+  maxAttempts     Int      @default(3)
+  verified        Boolean  @default(false)
+  
+  expiresAt       DateTime // 10 dakika geçerli
+  createdAt       DateTime @default(now())
+  
+  @@index([email])
+  @@index([userId])
+}
+
+// ============================================================
+// 16. ASTROLOJİK DEĞİŞİM MAIL KUYRUĞU (ayda max 1)
+// ============================================================
+// Yıldız haritasında önemli değişim olunca → o burcun
+// insanlarına mail gönder (örn: Venüs retro, Ay burcu değişti).
+
+model AstroNotification {
+  id              String   @id @default(cuid())
+  userId          String
+  
+  eventType       String   // "venus_retro" | "mercury_retro" | "saturn_sign_change" | ...
+  eventDate       DateTime
+  description     String   // "Venüs Retrosu başladı"
+  
+  affectedSign    String   // "Akrep" / "Boğa" / ...
+  userEmail       String
+  userName        String?
+  
+  sentAt          DateTime?
+  status          String   @default("pending")  // "pending" | "sent" | "skipped"
+  
+  createdAt       DateTime @default(now())
+  
+  @@index([userId, status])
+  @@index([eventDate])
+}

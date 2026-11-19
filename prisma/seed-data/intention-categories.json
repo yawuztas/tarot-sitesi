@@ -1,0 +1,92 @@
+{
+  "intentionCategories": [
+    {
+      "slug": "general",
+      "name": "General Guidance",
+      "nameTr": "Genel Rehberlik",
+      "description": "When you have no specific question, but seek overall guidance for the period ahead.",
+      "descriptionTr": "Belirli bir sorunuz olmadığında, genel olarak hayatınızın yönü hakkında rehberlik aradığınızda.",
+      "promptModifierTr": "Bu fal genel bir rehberlik arayışıdır. Kullanıcı belirli bir soru sormamış, hayatının genel akışı hakkında ne görmem gerektiğini bilmek istiyor. Fal yorumunda geniş perspektif sun, ama yine de pratik yaşam ipuçları ver. Sembolik dili koru, ama somut tavsiyeler de ekle.",
+      "icon": "Sparkles",
+      "color": "amber",
+      "sortOrder": 1
+    },
+    {
+      "slug": "love",
+      "name": "Love & Relationships",
+      "nameTr": "Aşk ve İlişkiler",
+      "description": "Questions about romantic relationships, partnerships, family bonds, or friendships.",
+      "descriptionTr": "Romantik ilişkiler, evlilik, aile bağları veya dostluklar hakkındaki sorular.",
+      "promptModifierTr": "Bu fal aşk ve ilişkiler alanındadır. Romantik bağlar, partnerlikle ilgili konular, evlilik, ayrılık, yeni tanışmalar veya mevcut ilişkinin derinleşmesi gibi temalar ön plandadır. Fal yorumunu duygusal derinlikle, kalbin diliyle ver. İlişki dinamiklerini sembollerle açıkla. Acı truths'lerden kaçınma, ama şefkatle sun. Gerçek aşkın önce kendinle başladığını daima hatırlat.",
+      "icon": "Heart",
+      "color": "rose",
+      "sortOrder": 2
+    },
+    {
+      "slug": "career",
+      "name": "Career & Work",
+      "nameTr": "Kariyer ve İş",
+      "description": "Questions about work, career path, business decisions, professional development.",
+      "descriptionTr": "İş, kariyer yolu, iş kararları, profesyonel gelişim hakkındaki sorular.",
+      "promptModifierTr": "Bu fal kariyer ve iş alanındadır. İş hayatı, profesyonel hedefler, terfi, iş değişikliği, girişimcilik, iş ilişkileri, maddi başarı gibi temalar ön plandadır. Fal yorumunu stratejik bir bilgelikle sun; kartların iş dünyasına nasıl yansıdığını göster. Pratik, uygulanabilir tavsiyeler ver, ama mistik dili koru. Elementleri (Ateş=irade, Toprak=sabır, Hava=strateji, Su=intüsyon) iş bağlamında kullan.",
+      "icon": "Briefcase",
+      "color": "emerald",
+      "sortOrder": 3
+    },
+    {
+      "slug": "health",
+      "name": "Health & Wellbeing",
+      "nameTr": "Sağlık ve Refah",
+      "description": "Questions about physical health, mental wellbeing, energy, and vitality.",
+      "descriptionTr": "Fiziksel sağlık, zihinsel refah, enerji ve vitalite hakkındaki sorular.",
+      "promptModifierTr": "Bu fal sağlık ve refah alanındadır. Beden, zihin, ruh dengesi, enerji, vitalite gibi konular ön plandadır. ÖNEMLI: Tıbbi tavsiye VERME; fal rehberlik amaçlıdır, teşhis aracı değil. Bunun yerine, kartların sembolik enerjisini sağlık bağlamında yorumla. Elementlere ve beden-zihin-ruh üçlemesine odaklan. Kullanıcıya sağlığıyla ilgili sorumluluğu alması için ilham ver.",
+      "icon": "Activity",
+      "color": "teal",
+      "sortOrder": 4
+    },
+    {
+      "slug": "spiritual",
+      "name": "Spiritual Path",
+      "nameTr": "Ruhsal Yol",
+      "description": "Questions about spiritual growth, inner journey, life purpose, awakening.",
+      "descriptionTr": "Ruhsal gelişim, içsel yolculuk, hayat amacı, uyanış hakkındaki sorular.",
+      "promptModifierTr": "Bu fal ruhsal yol ve içsel gelişim alanındadır. Manevi arayış, içsel aydınlanma, karmik dersler, hayat amacı, gölge çalışması, içsel dönüşüm gibi temalar ön plandadır. Fal yorumunu en derin sembolik dille sun. Mistik geleneklere (Hermetizm, Kabbala, Astroloji, Alşim) atıflar yapabilirsin. Kullanıcının kendi içsel öğretmenini uyandır. Pratik tavsiyelerden ziyade, derin sezgisel içgörüler sun.",
+      "icon": "Moon",
+      "color": "indigo",
+      "sortOrder": 5
+    },
+    {
+      "slug": "money",
+      "name": "Money & Finance",
+      "nameTr": "Para ve Finans",
+      "description": "Questions about money, investments, financial decisions, abundance.",
+      "descriptionTr": "Para, yatırımlar, finansal kararlar, bolluk ve bereket hakkındaki sorular.",
+      "promptModifierTr": "Bu fal para ve finans alanındadır. Maddi güvenlik, yatırım kararları, bolluk bilinci, maddi kaygılar, miras gibi temalar ön plandadır. Fal yorumunu Toprak elementinin enerjisiyle sun. Tılsımlar suitinin (özellikle As, 4, 7, 10) anlamlarını vurgula. Gerçek zenginliğin maddi ve ruhsal olduğun hatırlat. Finansal tavsiye VERME; ama kartların sembolik enerjisini maddi bağlama çevir.",
+      "icon": "Coins",
+      "color": "yellow",
+      "sortOrder": 6
+    },
+    {
+      "slug": "decision",
+      "name": "Important Decision",
+      "nameTr": "Önemli Karar",
+      "description": "When you face a significant decision and seek clarity on which path to take.",
+      "descriptionTr": "Önemli bir kararın eşiğindeyken hangi yolu seçmeniz gerektiği konusunda netlik aradığınızda.",
+      "promptModifierTr": "Bu fal önemli bir karar anındadır. Kullanıcı iki veya daha fazla yol arasında seçim yapmaya çalışıyor. Fal yorumunu net bir şekilde sun: kartlar hangi seçeneği, hangi sonucu, hangi dersleri gösteriyor. İki seçenek arasında net tavsiye vermekten kaçınma, ama kartların eğilimini açıkça belirt. Kullanıcının kendi içsel cevabını bulmasına yardım et. Seçimlerin uzun vadeli sonuçlarına dikkat çek.",
+      "icon": "Compass",
+      "color": "violet",
+      "sortOrder": 7
+    },
+    {
+      "slug": "shadow",
+      "name": "Shadow Work",
+      "nameTr": "Gölge Çalışması",
+      "description": "When you seek to understand your inner patterns, fears, blocks, and subconscious.",
+      "descriptionTr": "İçsel örüntülerinizi, korkularınızı, blokajlarınızı ve bilinçaltınızı anlamak istediğinizde.",
+      "promptModifierTr": "Bu fal gölge çalışmasıdır. Kullanıcı kendi içsel karanlığını, bastırılmış duygularını, korkularını, tekrar eden örüntülerini anlamak istiyor. Fal yorumunu derin psikolojik ve ruhsal bir bakışla sun. Şeytan, Ay, Kule, Ölüm gibi kartların gölge yanlarını vurgula. Kullanıcının kendi gölgesiyle yüzleşmesi için cesaretlendir, ama yumuşak bir dille. Yargılamadan, sadece aydınlatarak. Bu falın iyileştirici bir amaç taşıdığını unutma.",
+      "icon": "Eye",
+      "color": "purple",
+      "sortOrder": 8
+    }
+  ]
+}

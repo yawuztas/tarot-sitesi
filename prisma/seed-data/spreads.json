@@ -1,0 +1,161 @@
+{
+  "spreads": [
+    {
+      "slug": "single",
+      "name": "Single Card",
+      "nameTr": "Tek Kart",
+      "description": "A simple single-card draw for quick daily guidance or focused questions.",
+      "descriptionTr": "Günlük rehberlik veya net bir soru için en sade açılım. Tek bir kart çekilir ve bu kart o anki enerjinin özünü yansıtır.",
+      "cardCount": 1,
+      "category": "basic",
+      "difficulty": 1,
+      "sortOrder": 1,
+      "positions": [
+        {
+          "positionIndex": 0,
+          "label": "The Card",
+          "labelTr": "Kart",
+          "meaning": "The energy or theme that you need to focus on right now.",
+          "meaningTr": "Şu an odaklanmanız gereken enerji veya tema. Kart, sorduğunuz sorunun özüne doğrudan bir yanıt verir."
+        }
+      ]
+    },
+    {
+      "slug": "three-card",
+      "name": "Three Card Spread",
+      "nameTr": "Üçlü Açılım",
+      "description": "A versatile three-card spread representing past, present, and future (or situation, action, outcome).",
+      "descriptionTr": "Geçmiş, şimdiki ve geleceği temsil eden çok yönlü bir açılım. Alternatif olarak durum, eylem, sonuç şeklinde de yorumlanabilir.",
+      "cardCount": 3,
+      "category": "basic",
+      "difficulty": 2,
+      "sortOrder": 2,
+      "positions": [
+        {
+          "positionIndex": 0,
+          "label": "Past",
+          "labelTr": "Geçmiş",
+          "meaning": "What has come before, the root of the situation, energies that have shaped the present.",
+          "meaningTr": "Sorunu oluşturan geçmiş olaylar, kök nedenler, bugünkü durumu şekillendiren enerjiler. Bu kart, nereden geldiğinizi gösterir."
+        },
+        {
+          "positionIndex": 1,
+          "label": "Present",
+          "labelTr": "Şimdiki",
+          "meaning": "The current state of affairs, the energy surrounding the question right now.",
+          "meaningTr": "Şu anki durum, sorunun merkezindeki enerji. Bu kart, nerede olduğunuzu ve hangi güçlerin aktif olduğunu gösterir."
+        },
+        {
+          "positionIndex": 2,
+          "label": "Future",
+          "labelTr": "Gelecek",
+          "meaning": "The likely outcome if the current trajectory continues, the direction the energy is flowing.",
+          "meaningTr": "Mevcut gidişat devam ederse ortaya çıkacak sonuç, enerjinin yöneldiği yer. Bu kart kesin kader değil, muhtemel sonuçtur."
+        }
+      ]
+    },
+    {
+      "slug": "celtic-cross",
+      "name": "Celtic Cross",
+      "nameTr": "Kelt Haçı",
+      "description": "The classic 10-card Celtic Cross spread, the most comprehensive traditional tarot spread. Provides deep insight into all aspects of a question.",
+      "descriptionTr": "Klasik 10 kartlık Kelt Haçı açılımı, geleneksel tarotun en kapsamlı açılımı. Bir sorunun tüm boyutlarını derinlemesine inceler.",
+      "cardCount": 10,
+      "category": "advanced",
+      "difficulty": 3,
+      "sortOrder": 3,
+      "positions": [
+        {
+          "positionIndex": 0,
+          "label": "The Present",
+          "labelTr": "Şimdiki Durum",
+          "meaning": "The current situation, the central issue or theme that the reading revolves around.",
+          "meaningTr": "Şu anki durum, falın merkezindeki konu. Bu kart, sorunun özünü ve sizi çevreleyen ana enerjiyi temsil eder."
+        },
+        {
+          "positionIndex": 1,
+          "label": "The Challenge",
+          "labelTr": "Karşıtı / Meydan Okuma",
+          "meaning": "The obstacle or challenge you face. This card crosses the first card, representing what stands in your way.",
+          "meaningTr": "Karşılaştığınız engel veya meydan okuma. Bu kart birinci kartı çaprazlar, yolunuzdaki zorluğu temsil eder."
+        },
+        {
+          "positionIndex": 2,
+          "label": "The Foundation",
+          "labelTr": "Temel",
+          "meaning": "The root cause, the underlying foundation of the situation. Often something from the past that influences the present.",
+          "meaningTr": "Köken nedensel, durumun altındaki temel. Genellikle geçmişten gelen ve bugünü etkileyen bir faktör."
+        },
+        {
+          "positionIndex": 3,
+          "label": "The Recent Past",
+          "labelTr": "Yakın Geçmiş",
+          "meaning": "Recent events that are related to the current situation, what has just passed and still influences you.",
+          "meaningTr": "Mevcut durumla ilgili yakın geçmiş olaylar, henüz etkisi süren, yeni yaşanmış olan."
+        },
+        {
+          "positionIndex": 4,
+          "label": "The Crown",
+          "labelTr": "Taç / Olası Sonuç",
+          "meaning": "Possible outcomes, what may happen if things continue on their current path. Not fixed fate, but a likely direction.",
+          "meaningTr": "Olası sonuçlar, mevcut yol devam ederse ne olabilir. Kesin kader değil, muhtemel yön."
+        },
+        {
+          "positionIndex": 5,
+          "label": "The Near Future",
+          "labelTr": "Yakın Gelecek",
+          "meaning": "What is coming soon, the next step or development in the situation.",
+          "meaningTr": "Yakında gelecek olan, durumda bir sonraki adım veya gelişme."
+        },
+        {
+          "positionIndex": 6,
+          "label": "Your Approach",
+          "labelTr": "Kendiniz / Yaklaşımınız",
+          "meaning": "How you see yourself in relation to the question, your attitude, your role in the situation.",
+          "meaningTr": "Soruna ilişkin kendinizi nasıl gördüğünüz, tutumunuz, durumdaki rolünüz."
+        },
+        {
+          "positionIndex": 7,
+          "label": "External Influences",
+          "labelTr": "Dış Etkiler / Çevre",
+          "meaning": "The environment around you, other people's attitudes, external forces that affect the situation.",
+          "meaningTr": "Sizi çevreleyen ortam, başkalarının tutumları, durumu etkileyen dış güçler."
+        },
+        {
+          "positionIndex": 8,
+          "label": "Hopes and Fears",
+          "labelTr": "Umutlar ve Korkular",
+          "meaning": "Your deepest hopes and fears about the situation. Sometimes these are intertwined.",
+          "meaningTr": "Durumla ilgili en derin umutlarınız ve korkularınız. Bazen bu iki duygu iç içe geçer."
+        },
+        {
+          "positionIndex": 9,
+          "label": "The Outcome",
+          "labelTr": "Sonuç",
+          "meaning": "The final outcome, the resolution of the situation based on the energies present. Remember, the future is not fixed.",
+          "meaningTr": "Son sonuç, mevcut enerjiler temelinde durumun çözümü. Unutmayın, gelecek sabit değildir; bu kart muhtemel sonucu gösterir."
+        }
+      ]
+    },
+    {
+      "slug": "horseshoe",
+      "name": "Horseshoe Spread",
+      "nameTr": "Kutsal At Nalı (Kader Yolu)",
+      "description": "A 7-card deep storytelling spread revealing the journey, hidden shadows, obstacles, advice and ultimate outcome.",
+      "descriptionTr": "7 kartlık derin sinematik hikaye açılımı. Geçmişin köklerinden gizli gölgelere, engellerden kahinin tavsiyesine ve nihai kader kapısına kadar olayları bir roman gibi aydınlatır.",
+      "cardCount": 7,
+      "category": "advanced",
+      "difficulty": 2,
+      "sortOrder": 3,
+      "positions": [
+        { "positionIndex": 0, "label": "Past Influences", "labelTr": "Geçmişin Kökleri", "meaning": "Past events and root energy", "meaningTr": "Seni bu eşiğe getiren geçmiş olaylar ve kök enerji." },
+        { "positionIndex": 1, "label": "Current Situation", "labelTr": "Şimdiki Durum & Kalbin", "meaning": "Current state of mind and heart", "meaningTr": "Şu an kalbinde ve zihninde taşıdığın gerçek durum." },
+        { "positionIndex": 2, "label": "Hidden Shadows", "labelTr": "Gizli Etkiler & Gölgeler", "meaning": "Subconscious and hidden energies", "meaningTr": "Farkında olmadığın, arka planda çalışan gizli enerjiler." },
+        { "positionIndex": 3, "label": "Obstacle", "labelTr": "Önündeki En Büyük Engel", "meaning": "The main challenge you face", "meaningTr": "Ayağına takılan taş, aşman gereken asıl meydan okuma." },
+        { "positionIndex": 4, "label": "Surroundings", "labelTr": "Çevren & Dış Dünyanın Bakışı", "meaning": "External people and environment", "meaningTr": "Ailenin, etrafındaki insanların veya o kişinin sana etkisi." },
+        { "positionIndex": 5, "label": "Oracle Advice", "labelTr": "Kahinin Bilge Tavsiyesi", "meaning": "Wise counsel and guidance", "meaningTr": "Düğümü çözmek için atman gereken en doğru adım." },
+        { "positionIndex": 6, "label": "Final Outcome", "labelTr": "Nihai Çözüm & Kader Kapısı", "meaning": "Ultimate resolution and destination", "meaningTr": "Tavsiyeye uyulduğunda hikayenin varacağı nihai sonuç." }
+      ]
+    }
+  ]
+}

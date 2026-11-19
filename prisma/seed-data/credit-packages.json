@@ -1,0 +1,49 @@
+{
+  "creditPackages": [
+    {
+      "name": "Tek Fal",
+      "creditAmount": 1,
+      "priceTl": 50,
+      "discountPercentage": 0,
+      "description": "Tek bir fal açımı için. Yeni başlayanlar için ideal.",
+      "badge": null,
+      "sortOrder": 1
+    },
+    {
+      "name": "Üçlü Paket",
+      "creditAmount": 3,
+      "priceTl": 135,
+      "discountPercentage": 10,
+      "description": "Üç fal açımı. %10 indirim. Bir haftalık ritüel için ideal.",
+      "badge": null,
+      "sortOrder": 2
+    },
+    {
+      "name": "Beşli Paket",
+      "creditAmount": 5,
+      "priceTl": 200,
+      "discountPercentage": 20,
+      "description": "Beş fal açımı. %20 indirim. Aylık düzenli fal açanlar için.",
+      "badge": "Popüler",
+      "sortOrder": 3
+    },
+    {
+      "name": "Onlu Paket",
+      "creditAmount": 10,
+      "priceTl": 350,
+      "discountPercentage": 30,
+      "description": "On fal açımı. %30 indirim. Sık fal açan kullanıcılar için.",
+      "badge": null,
+      "sortOrder": 4
+    },
+    {
+      "name": "Ayın Falı",
+      "creditAmount": 25,
+      "priceTl": 750,
+      "discountPercentage": 40,
+      "description": "Yirmibeş fal açımı. %40 indirim. Günlük fal ritüeli için en avantajlı paket.",
+      "badge": "En Avantajlı",
+      "sortOrder": 5
+    }
+  ]
+}

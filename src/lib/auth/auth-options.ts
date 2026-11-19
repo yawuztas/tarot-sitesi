@@ -18,6 +18,19 @@ import bcrypt from 'bcryptjs';
 import { db } from '@/lib/db';
 import { checkKeyRateLimit } from '@/lib/security/rate-limit';
 
+/**
+ * Dev ortamı için çalışma anında üretilen geçici secret.
+ * Repoya gömülü sabit bir secret KULLANILMAZ; production'da
+ * NEXTAUTH_SECRET env değişkeni zorunludur (aşağıda kontrol edilir).
+ */
+function generateEphemeralDevSecret(): string {
+  let secret = '';
+  while (secret.length < 48) {
+    secret += Math.random().toString(36).slice(2);
+  }
+  return secret.slice(0, 48);
+}
+
 function resolveNextAuthSecret(): string {
   const envSecret = process.env.NEXTAUTH_SECRET;
   if (envSecret && envSecret.length >= 32) {
@@ -26,7 +39,7 @@ function resolveNextAuthSecret(): string {
   if (process.env.NODE_ENV === 'production') {
     throw new Error('NEXTAUTH_SECRET production ortamında en az 32 karakter olarak tanımlanmalıdır.');
   }
-  return envSecret || 'dev-secret-mystic-tarot-local-only';
+  return generateEphemeralDevSecret();
 }
 
 export const authOptions: NextAuthOptions = {

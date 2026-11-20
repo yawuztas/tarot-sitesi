@@ -1,7 +1,9 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  output: "standalone",
+  // Vercel'de standalone gerekmez (kendi build pipeline'ı var, .nft.json çakışması yapıyor).
+  // Lokalde `npm start` için standalone çıktısı korunur.
+  ...(process.env.VERCEL ? {} : { output: "standalone" as const }),
   poweredByHeader: false,
   typescript: {
     ignoreBuildErrors: false,

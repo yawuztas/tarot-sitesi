@@ -8,8 +8,9 @@
  * Backend-only: z-ai-web-dev-sdk sunucu tarafında çalışır.
  */
 
+import { createHash } from 'crypto';
 import { NextRequest } from 'next/server';
-import { streamTarotInterpretation } from '@/lib/ai/gemini';
+import { streamTarotInterpretation, getActiveAiProvider } from '@/lib/ai/gemini';
 import { db } from '@/lib/db';
 import {
   buildReadingPrompt,
@@ -21,6 +22,12 @@ import {
 } from '@/lib/ai/prompt-builder';
 import type { TarotCard } from '@/lib/tarot/cards';
 import { getCurrentUser } from '@/lib/auth/session';
+import {
+  getCurrentSession,
+  getRemainingQuestions,
+  isSessionPaid,
+  updateSession,
+} from '@/lib/session/anonymous-session';
 import { calculateCurrentTransits } from '@/lib/astrology/chart';
 import { applyRateLimit } from '@/lib/security/rate-limit';
 import { assertSameOrigin, clampText, isValidSlug } from '@/lib/security/validation';
@@ -424,19 +431,166 @@ Yanıtın 2 veya 3 akıcı paragraf olsun. Asla genel kart tanıtımı yapma vey
     });
   }
 
-  // AI API ile mistik yorum stream'ini başlat (Gemini / GLM / MiniMax)
+  // ============================================================
+  // AI ERISIM POLITIKASI (maliyet korumasi)
+  // ============================================================
+  // Uye      : AI yorumu acilir, gunluk kota ile sinirlanir (AiCallLog sayaci,
+  //            DB'de kalici - serverless instance'lar arasinda tutarlı)
+  // Misafir  : yalnizca odeme yapmis oturum (isSessionPaid) ve kalan soru varsa AI
+  // Digeri   : yerel prosedurel motor (forceLocal) -> AI maliyeti 0
+  const DAILY_LIMIT = parseInt(process.env.AI_DAILY_LIMIT_PER_USER || '20', 10);
+
+  const anonSession = currentUser ? null : await getCurrentSession();
+  const guestHasAi = Boolean(
+    anonSession && isSessionPaid(anonSession) && getRemainingQuestions(anonSession) > 0
+  );
+
+  let allowAi = false;
+  let dailyCount = 0;
+
+  if (currentUser) {
+    const startOfDay = new Date();
+    startOfDay.setHours(0, 0, 0, 0);
+    dailyCount = await db.aiCallLog.count({
+      where: { userId: currentUser.id, createdAt: { gte: startOfDay } },
+    });
+    allowAi = dailyCount < DAILY_LIMIT;
+    if (!allowAi) {
+      return new Response(
+        JSON.stringify({
+          error: `Gunluk AI yorum hakkin doldu (${DAILY_LIMIT}). Yarın tekrar dene veya bir kredi paketi al.`,
+        }),
+        { status: 429, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
+  } else {
+    allowAi = guestHasAi;
+  }
+
+  // ============================================================
+  // YORUM CACHE (ayni prompt -> AI tekrar cagrilmaz)
+  // ============================================================
+  const cacheKey = createHash('sha256')
+    .update(`${finalSystemInstruction}\n---\n${finalPrompt}`)
+    .digest('hex');
+
+  const streamHeaders = {
+    'Content-Type': 'text/plain; charset=utf-8',
+    'Cache-Control': 'no-cache, no-transform',
+    'Connection': 'keep-alive',
+    'X-Accel-Buffering': 'no',
+  };
+
+  if (allowAi) {
+    try {
+      const cached = await db.interpretationCache.findFirst({
+        where: { cacheKey, expiresAt: { gt: new Date() } },
+      });
+      if (cached) {
+        const payload = JSON.parse(cached.responsePayload) as { text?: string };
+        if (payload?.text) {
+          // Cache HIT: AI cagrisi yapilmaz, maliyet 0
+          await db.aiCallLog
+            .create({
+              data: {
+                userId: currentUser?.id ?? null,
+                model: 'cache',
+                provider: 'cache',
+                outputTokens: Math.ceil(payload.text.length / 3),
+                cacheHit: true,
+                success: true,
+              },
+            })
+            .catch(() => {});
+          return new Response(payload.text, { headers: streamHeaders });
+        }
+      }
+    } catch (e) {
+      console.warn('Interpretation cache okunamadigi icin AI ile devam:', e);
+    }
+  }
+
+  // AI API ile mistik yorum stream'ini baslat (Gemini / GLM / MiniMax)
+  // forceLocal=true ise hicbir AI saglayicisina gidilmez.
   const textStream = await streamTarotInterpretation({
     prompt: finalPrompt,
     systemInstruction: finalSystemInstruction,
     isChat: isChatFollowup,
+    forceLocal: !allowAi,
   });
 
-  return new Response(textStream, {
-    headers: {
-      'Content-Type': 'text/plain; charset=utf-8',
-      'Cache-Control': 'no-cache, no-transform',
-      'Connection': 'keep-alive',
-      'X-Accel-Buffering': 'no',
+  const providerInfo = getActiveAiProvider();
+  const startedAt = Date.now();
+
+  // Stream sarmalayici: metni toplar, bitince cache + AiCallLog yazar.
+  const wrappedStream = new ReadableStream<Uint8Array>({
+    async start(controller) {
+      const reader = textStream.getReader();
+      let fullText = '';
+      let succeeded = true;
+      try {
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          fullText += new TextDecoder().decode(value);
+          controller.enqueue(value);
+        }
+        await controller.close();
+      } catch (err) {
+        succeeded = false;
+        console.error('AI stream hatasi:', err);
+        controller.error(err);
+      }
+
+      // Akis bittikten sonra: cache + kullanici sayaci (hatalar akisi bozmaz)
+      if (allowAi) {
+        try {
+          if (succeeded && fullText.length > 200) {
+            await db.interpretationCache.upsert({
+              where: { cacheKey },
+              create: {
+                cacheKey,
+                responsePayload: JSON.stringify({ text: fullText }),
+                model: providerInfo.model,
+                tokenCount: Math.ceil(fullText.length / 3),
+                expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+              },
+              update: {
+                responsePayload: JSON.stringify({ text: fullText }),
+                model: providerInfo.model,
+                tokenCount: Math.ceil(fullText.length / 3),
+                expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+              },
+            });
+          }
+
+          await db.aiCallLog.create({
+            data: {
+              userId: currentUser?.id ?? null,
+              model: providerInfo.model,
+              provider: providerInfo.provider,
+              outputTokens: Math.ceil(fullText.length / 3),
+              latencyMs: Date.now() - startedAt,
+              cacheHit: false,
+              success: succeeded,
+              errorMessage: succeeded ? null : 'stream error',
+            },
+          });
+
+          // Misafir: odeme yapilmis oturumun soru kotasini azalt
+          if (anonSession && succeeded) {
+            await updateSession(anonSession.id, {
+              questionsUsed: { increment: 1 },
+            }).catch(() => {});
+          }
+        } catch (e) {
+          console.warn('AI post-processing (cache / log / kota) basarisiz:', e);
+        }
+      }
     },
+  });
+
+  return new Response(wrappedStream, {
+    headers: streamHeaders,
   });
 }

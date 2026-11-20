@@ -13,6 +13,12 @@ export interface StreamTarotOptions {
   systemInstruction?: string;
   model?: string;
   isChat?: boolean;
+  /**
+   * true ise hicbir AI saglayicisina (Gemini / GLM / MiniMax) gidilmez;
+   * yerel prosedurel "oracle" motoru kullanilir. AI maliyeti 0.
+   * Misafir / kota dolmus kullanicilar icin kullanilir.
+   */
+  forceLocal?: boolean;
 }
 
 /**
@@ -90,9 +96,13 @@ export async function streamTarotInterpretation({
   systemInstruction,
   model,
   isChat = false,
+  forceLocal = false,
 }: StreamTarotOptions): Promise<ReadableStream<Uint8Array>> {
   const encoder = new TextEncoder();
-  const active = getActiveAiProvider();
+  // forceLocal: AI saglayicilarina hic gidilmez -> yerel prosedurel motor.
+  const active = forceLocal
+    ? { provider: 'fallback' as const, model: 'procedural-oracle' }
+    : getActiveAiProvider();
 
   // 1. Google Gemini (Hızlı Timeout'lu SSE Akışı + Non-Streaming Kurtarma)
   if (active.provider === 'gemini' && active.apiKey) {

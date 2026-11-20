@@ -28,6 +28,10 @@ readings.
   astro-context enriched prompts
 - **🛡️ Security** — same-origin assertions, input clamping, rate limits, strict
   security headers (X-Frame-Options DENY, CSP-friendly headers)
+- **💰 AI Cost Protection** — guests get a local procedural reading (zero AI
+  cost); AI interpretations unlock after payment (İyzico) or for members, bounded
+  by a per-user daily quota; identical prompts are served from a 30-day
+  interpretation cache instead of re-calling the model
 
 ## 🛠 Tech Stack
 
@@ -62,6 +66,7 @@ npm run dev
 | `GLM_API_KEY` / `GLM_MODEL` | Optional Zhipu GLM provider |
 | `TAROT_READING_PRICE_TRY` | Reading price (TRY) |
 | `TAROT_READING_QUESTION_QUOTA` | Free question quota per user |
+| `AI_DAILY_LIMIT_PER_USER` | Daily AI interpretations per member (default 20) |
 | `NEXT_PUBLIC_WHATSAPP_PHONE` | Contact number shown in UI |
 
 **AI without keys:** if no provider key is set, a built-in local fallback
@@ -108,6 +113,9 @@ tarot fal platformudur.
 - **🌍 Astro eklentiler:** Doğum haritası + canlı transit hesapları ile zengin
   prompt bağlamı
 - **🗣️ Sesli fal:** Gemini TTS ile okuma
+- **💰 Maliyet koruması:** Misafirlere AI yerine **yerel prosedürel yorum** (maliyet 0);
+  AI yorumu ödeme (İyzico) sonrası ya da üyelere açık ve **günlük kota** ile
+  sınırlı; aynı prompt'lar 30 günlük **cache**'ten döner, model tekrar çağrılmaz
 
 **Veritabanı:** Neon PostgreSQL üzerinde 24 Prisma modeli; 156 kart, 4 açılım,
 8 niyet kategorisi ve 5 kredi paketi seed verisi hazır gelir.

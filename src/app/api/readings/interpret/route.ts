@@ -434,11 +434,11 @@ Yanıtın 2 veya 3 akıcı paragraf olsun. Asla genel kart tanıtımı yapma vey
   // ============================================================
   // AI ERISIM POLITIKASI (maliyet korumasi)
   // ============================================================
-  // Uye      : AI yorumu acilir, gunluk kota ile sinirlanir (AiCallLog sayaci,
-  //            DB'de kalici - serverless instance'lar arasinda tutarlı)
+  // Uye      : AI yorumu acilir, gunluk kota ile sinirlanir (1 acilim + 10 sohbet sorusu = 11)
+  //            Cache HIT'ler kotadan dusmez (cacheHit: false)
   // Misafir  : yalnizca odeme yapmis oturum (isSessionPaid) ve kalan soru varsa AI
   // Digeri   : yerel prosedurel motor (forceLocal) -> AI maliyeti 0
-  const DAILY_LIMIT = parseInt(process.env.AI_DAILY_LIMIT_PER_USER || '20', 10);
+  const DAILY_LIMIT = parseInt(process.env.AI_DAILY_LIMIT_PER_USER || '11', 10);
 
   const anonSession = currentUser ? null : await getCurrentSession();
   const guestHasAi = Boolean(
@@ -452,7 +452,11 @@ Yanıtın 2 veya 3 akıcı paragraf olsun. Asla genel kart tanıtımı yapma vey
     const startOfDay = new Date();
     startOfDay.setHours(0, 0, 0, 0);
     dailyCount = await db.aiCallLog.count({
-      where: { userId: currentUser.id, createdAt: { gte: startOfDay } },
+      where: {
+        userId: currentUser.id,
+        cacheHit: false,
+        createdAt: { gte: startOfDay },
+      },
     });
     allowAi = dailyCount < DAILY_LIMIT;
     if (!allowAi) {

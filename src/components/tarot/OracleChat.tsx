@@ -1,8 +1,10 @@
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
+import Link from 'next/link';
+import { useSession } from 'next-auth/react';
 import { motion } from 'framer-motion';
-import { Sparkles, Send, MessageCircle, User, Bot, AlertCircle } from 'lucide-react';
+import { Sparkles, Send, MessageCircle, User, Bot, Lock } from 'lucide-react';
 
 interface ChatMessage {
   role: 'user' | 'assistant';
@@ -42,6 +44,8 @@ export default function OracleChat({
   pillarTitle,
   initialReading,
 }: OracleChatProps) {
+  const { data: session, status: authStatus } = useSession();
+  const isAuthenticated = Boolean(session?.user);
   const storageKey = sessionKey ? `mystic_oracle_chat_${sessionKey}` : null;
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState('');
@@ -194,6 +198,40 @@ export default function OracleChat({
   };
 
   const remainingQuestions = Math.max(0, maxQuestions - questionsUsed);
+
+  if (authStatus !== 'loading' && !isAuthenticated) {
+    return (
+      <div className="mt-10 rounded-2xl bg-[#110620]/90 border border-purple-500/30 p-6 shadow-2xl text-center space-y-4">
+        <div className="inline-flex items-center justify-center w-11 h-11 rounded-full bg-amber-500/15 border border-amber-400/40 text-amber-300 mx-auto">
+          <Lock className="w-5 h-5" />
+        </div>
+        <div className="space-y-1.5 max-w-lg mx-auto">
+          <h4 className="font-serif text-lg text-amber-100">
+            10 Soruluk Canlı Kahin Sohbeti Üyelere Özeldir
+          </h4>
+          <p className="text-xs text-zinc-400 leading-relaxed">
+            Misafir olarak fal açabilirsin; ancak açtığın kartlar üzerine kahine 10 soru sorabilmek,
+            kişisel yapay zeka yorumu almak ve doğum haritanla fal geçmişini saklamak için ücretsiz giriş yap.
+          </p>
+        </div>
+        <div className="flex flex-wrap items-center justify-center gap-3 pt-1">
+          <Link
+            href="/kayit?callbackUrl=/fal"
+            className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-black font-semibold text-xs tracking-wider transition shadow-md"
+          >
+            <Sparkles className="w-3.5 h-3.5" />
+            Ücretsiz Kayıt Ol (10 Soru Hakkı)
+          </Link>
+          <Link
+            href="/giris?callbackUrl=/fal"
+            className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-xl bg-purple-950/60 hover:bg-purple-900/60 border border-purple-500/30 text-purple-200 text-xs font-medium transition"
+          >
+            Giriş Yap
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="mt-10 rounded-2xl bg-[#110620]/90 border border-purple-500/30 p-6 shadow-2xl space-y-6">

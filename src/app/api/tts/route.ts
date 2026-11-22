@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { GoogleGenAI } from '@google/genai';
 import { applyRateLimit } from '@/lib/security/rate-limit';
 import { assertSameOrigin, clampText } from '@/lib/security/validation';
+import { getCurrentUser } from '@/lib/auth/session';
+import { getCurrentSession, isSessionPaid } from '@/lib/session/anonymous-session';
+import { db } from '@/lib/db';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -57,6 +60,31 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ available: false, reason: 'no_api_key' }, { status: 200 });
   }
 
+  // AI maliyet koruması: yalnızca giriş yapmış üyeler veya ödenmiş oturumlar Gemini TTS kullanır.
+  // Misafirler ücretsiz tarayıcı speechSynthesis'e düşer.
+  const currentUser = await getCurrentUser();
+  const anonSession = currentUser ? null : await getCurrentSession();
+  const guestHasAi = Boolean(anonSession && isSessionPaid(anonSession));
+  if (!currentUser && !guestHasAi) {
+    return NextResponse.json({ available: false, reason: 'auth_required' }, { status: 200 });
+  }
+
+  if (currentUser) {
+    const startOfDay = new Date();
+    startOfDay.setHours(0, 0, 0, 0);
+    const DAILY_TTS_LIMIT = parseInt(process.env.AI_TTS_DAILY_LIMIT_PER_USER || '15', 10);
+    const ttsToday = await db.aiCallLog.count({
+      where: {
+        userId: currentUser.id,
+        provider: 'gemini-tts',
+        createdAt: { gte: startOfDay },
+      },
+    });
+    if (ttsToday >= DAILY_TTS_LIMIT) {
+      return NextResponse.json({ available: false, reason: 'daily_limit' }, { status: 200 });
+    }
+  }
+
   const textToSpeak = rawText.slice(0, 1800);
   const preferredTtsModel = process.env.GEMINI_TTS_MODEL || 'gemini-3.8-flash-tts';
   const ttsModels = Array.from(
@@ -99,6 +127,19 @@ export async function POST(req: NextRequest) {
         if (!base64Audio) continue;
 
         const audioBuffer = Buffer.from(base64Audio, 'base64');
+
+        await db.aiCallLog
+          .create({
+            data: {
+              userId: currentUser?.id ?? null,
+              model: ttsModel,
+              provider: 'gemini-tts',
+              outputTokens: Math.ceil(textToSpeak.length / 3),
+              cacheHit: false,
+              success: true,
+            },
+          })
+          .catch(() => {});
 
         // Eğer raw PCM (L16 / pcm) ise WAV header ekle
         if (mimeType.includes('L16') || mimeType.includes('pcm')) {

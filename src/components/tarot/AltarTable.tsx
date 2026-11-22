@@ -2,6 +2,7 @@
 
 import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import Link from 'next/link';
+import { useSession } from 'next-auth/react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Sparkles,
@@ -114,6 +115,7 @@ interface AstroSummary {
 }
 
 export default function AltarTable() {
+  const { status: authStatus } = useSession();
   const [selectedPillar, setSelectedPillar] = useState<PillarType>('love');
   const [selectedSpread, setSelectedSpread] = useState<SpreadType>('three-card');
   const [selectedStyle, setSelectedStyle] = useState<DeckStyleType>('rider-waite');
@@ -148,6 +150,7 @@ export default function AltarTable() {
 
   const readingRef = useRef<HTMLDivElement | null>(null);
   const restoredAstroKeyRef = useRef<string | null>(null);
+  const restoredFromSessionRef = useRef(false);
   const currentPillar = PILLARS[selectedPillar];
 
   // Açılıma göre dinamik pozisyon başlıkları (referans stabilitesi için memoized)
@@ -206,6 +209,7 @@ export default function AltarTable() {
           setAstroSummary(data.astroSummary);
           restoredAstroKeyRef.current = `${data.birthDate || ''}|${data.birthTime || ''}|${Boolean(data.birthTimeUnknown)}|${data.birthCity || ''}`;
         }
+        restoredFromSessionRef.current = true;
         if (data.autoProceedToFanning) {
           setPhase('fanning');
         }
@@ -217,6 +221,49 @@ export default function AltarTable() {
       active = false;
     };
   }, []);
+
+  // Giriş yapmış kullanıcının DB'deki kayıtlı doğum bilgilerini otomatik yükle
+  useEffect(() => {
+    if (authStatus !== 'authenticated' || restoredFromSessionRef.current) return;
+    let cancelled = false;
+
+    async function loadSavedUserChart() {
+      try {
+        const resp = await fetch('/api/astrology/chart');
+        if (!resp.ok || cancelled) return;
+        const data = await resp.json();
+        if (cancelled) return;
+
+        if (data.displayName) setUserName(data.displayName);
+        if (data.hasChart && data.chart) {
+          const bDate = data.birthMeta?.birthDateStr || '1998-05-14';
+          const bTime = data.birthMeta?.birthTime || '14:30';
+          const bTimeUnknown = Boolean(data.birthMeta?.birthTimeUnknown);
+          const bCity = data.birthMeta?.birthPlaceName || 'İstanbul';
+
+          setBirthDate(bDate);
+          setBirthTime(bTime);
+          setBirthTimeUnknown(bTimeUnknown);
+          setBirthCity(bCity);
+          setIncludeAstro(true);
+          setAstroSummary({
+            sunSign: data.chart.sunSign,
+            sunSignFormatted: data.chart.sunSignFormatted,
+            moonSign: data.chart.moonSign,
+            moonSignFormatted: data.chart.moonSignFormatted,
+            ascendant: data.chart.ascendant,
+            ascendantFormatted: data.chart.ascendantFormatted,
+          });
+          restoredAstroKeyRef.current = `${bDate}|${bTime}|${bTimeUnknown}|${bCity}`;
+        }
+      } catch {}
+    }
+
+    loadSavedUserChart();
+    return () => {
+      cancelled = true;
+    };
+  }, [authStatus]);
 
   // Doğum haritasını arka planda hesapla (gereksiz tekrar istekleri önlenir)
   useEffect(() => {
@@ -245,6 +292,7 @@ export default function AltarTable() {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
+            displayName: userName.trim() || undefined,
             birthDate,
             birthTime: birthTimeUnknown ? undefined : birthTime,
             birthTimeUnknown,
@@ -780,12 +828,16 @@ export default function AltarTable() {
                       Doğum haritandaki gökyüzü transitleri ile masadaki kartların frekansı
                       birleşiyor. Kehanet {adCountdown} saniye içinde dökülecek.
                     </p>
-                    <div className="mt-4 p-4 rounded-xl border border-dashed border-purple-500/30 bg-black/40 text-[11px] text-zinc-400 flex flex-col items-center justify-center min-h-[90px]">
-                      <span className="text-[10px] text-zinc-400 uppercase tracking-widest mb-1">
-                        Sponsorlu Reklam Alanı (Google AdSense)
+                    <div className="mt-4 p-4 rounded-xl border border-purple-500/30 bg-black/40 text-[11px] text-zinc-400 flex flex-col items-center justify-center min-h-[76px] space-y-1">
+                      <span className="text-amber-300/90 font-serif">
+                        ✦ Yıldız Transitleri &amp; Kadim Semboller Hizalanıyor ✦
                       </span>
-                      <span className="text-amber-300/80 font-serif">
-                        ✦ Bu seans sponsorlarımızın desteğiyle %100 ücretsizdir ✦
+                      <span className="text-[10px] text-zinc-400">
+                        {selectedSpread === 'celtic-cross'
+                          ? '10 kartlık büyük kader haritası çözülüyor...'
+                          : selectedSpread === 'horseshoe'
+                          ? '7 kartlık yolculuk halkası birleştiriliyor...'
+                          : 'Kartların arasındaki görünmez bağ okunuyor...'}
                       </span>
                     </div>
                   </div>

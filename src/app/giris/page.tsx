@@ -232,6 +232,19 @@ function GirisForm() {
                 >
                   {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <>Devam Et <ArrowRight className="w-4 h-4" /></>}
                 </button>
+
+                <div className="text-right">
+                  <Link
+                    href={
+                      email.trim()
+                        ? `/sifremi-unuttum?email=${encodeURIComponent(email.trim().toLowerCase())}`
+                        : '/sifremi-unuttum'
+                    }
+                    className="text-xs text-zinc-400 hover:text-amber-300 transition"
+                  >
+                    Şifremi unuttum
+                  </Link>
+                </div>
               </motion.form>
             )}
 
@@ -328,13 +341,25 @@ function GirisForm() {
                   {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <>Perdeyi Arala <ArrowRight className="w-4 h-4" /></>}
                 </button>
 
-                <button
-                  type="button"
-                  onClick={() => setStep('challenge')}
-                  className="w-full text-xs text-zinc-500 hover:text-zinc-300"
-                >
-                  ← Geri
-                </button>
+                <div className="flex items-center justify-between pt-1">
+                  <button
+                    type="button"
+                    onClick={() => setStep('challenge')}
+                    className="text-xs text-zinc-500 hover:text-zinc-300"
+                  >
+                    ← Geri
+                  </button>
+                  <Link
+                    href={
+                      email.trim()
+                        ? `/sifremi-unuttum?email=${encodeURIComponent(email.trim().toLowerCase())}`
+                        : '/sifremi-unuttum'
+                    }
+                    className="text-xs text-amber-400/90 hover:text-amber-300 hover:underline"
+                  >
+                    Şifremi unuttum
+                  </Link>
+                </div>
               </motion.form>
             )}
 

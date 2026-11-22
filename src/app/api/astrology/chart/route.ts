@@ -24,7 +24,7 @@ import { getCurrentUser } from '@/lib/auth/session';
 import { generateAstrologyProfile } from '@/lib/astrology/user-profile';
 import { calculateDailyTransits, type DailyTransitReport } from '@/lib/astrology/transits';
 import { applyRateLimit } from '@/lib/security/rate-limit';
-import { assertSameOrigin } from '@/lib/security/validation';
+import { assertSameOrigin, clampText } from '@/lib/security/validation';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -34,6 +34,7 @@ interface ChartRequestBody {
   birthTime?: string;      // "14:30"
   birthTimeUnknown?: boolean;
   birthCity: string;       // "İstanbul"
+  displayName?: string;    // "Aylin"
 }
 
 function parseBirthDateTime(dateStr: string, timeStr?: string): Date {
@@ -100,9 +101,11 @@ export async function POST(req: NextRequest) {
   // Kullanıcı oturum açtıysa: User'a kaydet
   const user = await getCurrentUser();
   if (user) {
+    const cleanDisplayName = clampText(body.displayName, 60);
     await db.user.update({
       where: { id: user.id },
       data: {
+        ...(cleanDisplayName ? { displayName: cleanDisplayName } : {}),
         birthDate,
         birthTime: birthTimeUnknown ? null : body.birthTime,
         birthTimeUnknown,
@@ -143,6 +146,7 @@ export async function GET() {
   const dbUser = await db.user.findUnique({
     where: { id: user.id },
     select: {
+      displayName: true,
       natalChartJson: true,
       birthDate: true,
       birthTime: true,
@@ -155,16 +159,28 @@ export async function GET() {
   });
 
   if (!dbUser?.natalChartJson) {
-    return NextResponse.json({ hasChart: false });
+    return NextResponse.json({ hasChart: false, displayName: dbUser?.displayName || null });
   }
 
   try {
     const chart = JSON.parse(dbUser.natalChartJson);
+    const profile = generateAstrologyProfile(chart);
+    let dailyTransit: DailyTransitReport | null = null;
+    try {
+      dailyTransit = calculateDailyTransits(chart);
+    } catch {}
+    const birthDateStr = dbUser.birthDate
+      ? new Date(dbUser.birthDate.getTime() + 3 * 3600 * 1000).toISOString().slice(0, 10)
+      : null;
     return NextResponse.json({
       hasChart: true,
+      displayName: dbUser.displayName || null,
       chart,
+      profile,
+      dailyTransit,
       birthMeta: {
         birthDate: dbUser.birthDate,
+        birthDateStr,
         birthTime: dbUser.birthTime,
         birthTimeUnknown: dbUser.birthTimeUnknown,
         birthPlaceName: dbUser.birthPlaceName,

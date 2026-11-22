@@ -68,6 +68,9 @@ npm run dev
 | `TAROT_READING_QUESTION_QUOTA` | Free question quota per user |
 | `AI_DAILY_LIMIT_PER_USER` | Daily AI interpretations per member (default 20) |
 | `NEXT_PUBLIC_WHATSAPP_PHONE` | Contact number shown in UI |
+| `RESEND_API_KEY` | Resend email API key for password reset emails (preferred if set) |
+| `EMAIL_FROM` | Sender address (e.g., `Tarot Atolyesi <noreply@domain.com>`) |
+| `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `SMTP_SECURE` | Optional SMTP fallback when `RESEND_API_KEY` is not configured |
 
 **AI without keys:** if no provider key is set, a built-in local fallback
 engine still produces structural readings — the app never hard-fails.

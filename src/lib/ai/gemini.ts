@@ -292,8 +292,8 @@ export async function streamTarotInterpretation({
     }
   }
 
-  // API Anahtarı henüz eklenmemişse yüksek kaliteli ussal mistik akış
-  return createProceduralTarotStream(prompt, isChat);
+  // API Anahtarı yoksa veya forceLocal (misafir/kota) seçildiyse bağlam duyarlı akış
+  return createProceduralTarotStream(prompt, isChat, forceLocal);
 }
 
 /**
@@ -389,7 +389,11 @@ function extractPromptDetails(prompt: string) {
 /**
  * Yüksek kaliteli Mistik Usul Stream (API Key olmadığında falı kesmeyen bağlam duyarlı akış)
  */
-function createProceduralTarotStream(prompt: string, isChat = false): ReadableStream<Uint8Array> {
+function createProceduralTarotStream(
+  prompt: string,
+  isChat = false,
+  isGuestMode = false
+): ReadableStream<Uint8Array> {
   const encoder = new TextEncoder();
   const { userName, intention, cardLines, astroLine } = extractPromptDetails(prompt);
   const cardsText =
@@ -418,13 +422,18 @@ function createProceduralTarotStream(prompt: string, isChat = false): ReadableSt
     });
   }
 
+  const footerNote =
+    isGuestMode || process.env.NODE_ENV === 'production'
+      ? `✦ Kişiye özel derin yapay zeka yorumu, doğum haritanın kaydedilmesi ve 10 soruluk canlı kahin sohbeti için ücretsiz üye olup giriş yapabilirsin.`
+      : `✦ Not: Geliştirme ortamında canlı LLM yorumu için .env dosyasına GEMINI_API_KEY ekleyebilirsin.`;
+
   // İlk Fal Açılımı — kartlara ve astrolojiye dayalı
   const paragraphs = [
     `Perde aralandı ${userName}...\n\n`,
     `"${intention}" niyetiyle masaya bıraktığın enerji, ${cardsText} üzerinden güçlü bir diyalog kuruyor.${astroLine ? ` Doğum haritandaki ${astroLine} yerleşimi de bu sembollerin altını özellikle çiziyor.` : ''}\n\n`,
     `Kartların Aynasındaki Hikaye:\n${cardLines.length > 0 ? cardLines.map((c, i) => `${i + 1}. ${c}, bu süreçteki görünmeyen dinamiği açığa çıkarıyor.`).join(' ') : 'Çektiğin kartlar geçmişin izlerini bugünün iradesiyle buluşturuyor.'}\n\n`,
     `Yolun Rehberliği & Ritüel:\nÖnündeki dönemeçte zihninin gürültüsünü susturup kalbinin ilk verdiği sese güven. Bu akşam sessiz bir 5 dakika ayırıp niyetini tek bir cümlede netleştir; kartlar netlik kazandığın anda akışı hızlandıracaktır.\n\n`,
-    `✦ Not: Gerçek zamanlı derin LLM yorumu için .env dosyasına GEMINI_API_KEY ekleyebilirsin.`,
+    footerNote,
   ];
 
   return new ReadableStream<Uint8Array>({

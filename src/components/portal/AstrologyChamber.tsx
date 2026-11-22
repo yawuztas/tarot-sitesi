@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
+import { useSession } from 'next-auth/react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Sparkles,
@@ -240,10 +241,23 @@ function getConciseDailyForecast(
   };
 }
 
+function resolveDominantElement(balance?: {
+  Ateş: number;
+  Toprak: number;
+  Hava: number;
+  Su: number;
+}) {
+  if (!balance) return 'Su';
+  const entries = Object.entries(balance) as [string, number][];
+  entries.sort((a, b) => b[1] - a[1]);
+  return entries[0][0];
+}
+
 export default function AstrologyChamber({
   onProceedToReadingSetup,
   initialData,
 }: AstrologyChamberProps) {
+  const { status: authStatus } = useSession();
   const [userName, setUserName] = useState(initialData?.userName || '');
   const [birthDate, setBirthDate] = useState(initialData?.birthDate || '1998-05-14');
   const [birthTime, setBirthTime] = useState(initialData?.birthTime || '14:30');
@@ -273,6 +287,53 @@ export default function AstrologyChamber({
 
   // Ethereal audio context for chimes
   const audioCtxRef = useRef<AudioContext | null>(null);
+
+  // Giriş yapmış kullanıcının kayıtlı doğum bilgilerini ve haritasını otomatik yükle
+  useEffect(() => {
+    if (authStatus !== 'authenticated' || initialData?.isSubmitted) return;
+    let cancelled = false;
+
+    async function loadSavedChart() {
+      try {
+        const resp = await fetch('/api/astrology/chart');
+        if (!resp.ok || cancelled) return;
+        const data = await resp.json();
+        if (cancelled) return;
+
+        if (data.displayName) setUserName(data.displayName);
+        if (data.hasChart && data.chart) {
+          if (data.birthMeta?.birthDateStr) setBirthDate(data.birthMeta.birthDateStr);
+          if (data.birthMeta?.birthTime) setBirthTime(data.birthMeta.birthTime);
+          if (typeof data.birthMeta?.birthTimeUnknown === 'boolean') {
+            setBirthTimeUnknown(data.birthMeta.birthTimeUnknown);
+          }
+          if (data.birthMeta?.birthPlaceName) setBirthCity(data.birthMeta.birthPlaceName);
+
+          const cData = {
+            sunSign: data.chart.sunSign,
+            sunSignFormatted: data.chart.sunSignFormatted,
+            moonSign: data.chart.moonSign,
+            moonSignFormatted: data.chart.moonSignFormatted,
+            ascendant: data.chart.ascendant,
+            ascendantFormatted: data.chart.ascendantFormatted,
+            elementBalance: data.chart.elementBalance,
+          };
+          setChartData(cData);
+          const domElem =
+            data.profile?.dominantElement || resolveDominantElement(data.chart.elementBalance);
+          setDominantElement(domElem);
+          setProfileData(data.profile || null);
+          setDailyTransitData(data.dailyTransit || null);
+          setIsSaved(true);
+        }
+      } catch {}
+    }
+
+    loadSavedChart();
+    return () => {
+      cancelled = true;
+    };
+  }, [authStatus, initialData?.isSubmitted]);
 
   const playCelestialChime = () => {
     try {
@@ -304,19 +365,6 @@ export default function AstrologyChamber({
     } catch {}
   };
 
-  // Haritadaki baskın elementi hesapla
-  const resolveDominantElement = (balance?: {
-    Ateş: number;
-    Toprak: number;
-    Hava: number;
-    Su: number;
-  }) => {
-    if (!balance) return 'Su';
-    const entries = Object.entries(balance) as [string, number][];
-    entries.sort((a, b) => b[1] - a[1]);
-    return entries[0][0];
-  };
-
   // Formu Onayla ve Haritayı Çıkar
   const handleSubmitAstro = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
@@ -333,6 +381,7 @@ export default function AstrologyChamber({
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          displayName: userName.trim() || undefined,
           birthDate,
           birthTime: birthTimeUnknown ? undefined : birthTime,
           birthTimeUnknown,

@@ -67,7 +67,15 @@ npm run dev
 | `TAROT_READING_PRICE_TRY` | Reading price (TRY) |
 | `TAROT_READING_QUESTION_QUOTA` | Free question quota per user |
 | `AI_DAILY_LIMIT_PER_USER` | Daily AI interpretations per member (default 20) |
+| `RESEND_API_KEY` | Resend API key (password-reset e-mails) |
+| `EMAIL_FROM` | Sender address, e.g. `Mystic Tarot <noreply@yourdomain.com>` |
+| `SMTP_HOST` / `SMTP_PORT` / `SMTP_USER` / `SMTP_PASS` / `SMTP_SECURE` | SMTP fallback when Resend is not configured |
 | `NEXT_PUBLIC_WHATSAPP_PHONE` | Contact number shown in UI |
+
+> **Sending domain:** with a plain Resend account you can only send to the
+> account owner's address (`onboarding@resend.dev`). Add a real sending domain
+> in the Resend dashboard (with the DNS records it gives you) before sending
+> password-reset mails to actual customers.
 | `RESEND_API_KEY` | Resend email API key for password reset emails (preferred if set) |
 | `EMAIL_FROM` | Sender address (e.g., `Tarot Atolyesi <noreply@domain.com>`) |
 | `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `SMTP_SECURE` | Optional SMTP fallback when `RESEND_API_KEY` is not configured |
